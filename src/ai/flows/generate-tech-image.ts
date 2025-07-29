@@ -1,16 +1,17 @@
 'use server';
 
 /**
- * @fileOverview A flow that finds an illustrative image URL for a technology from the web.
+ * @fileOverview A flow that finds an illustrative image URL for a technology from the web, with a fallback to AI image generation.
  *
  * - generateTechImage - A function that takes a technology name and returns an image URL.
  * - GenerateTechImageInput - The input type for the generateTechImage function.
  * - GenerateTechImageOutput - The return type for the generateTechImage function.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import { googleSearchRetriever } from '@genkit-ai/google-cloud';
+import {ai} from '@/ai/genkit';
+import {z} from 'genkit';
+import {googleSearchRetriever} from '@genkit-ai/google-cloud';
+import {googleAI} from '@genkit-ai/googleai';
 
 const GenerateTechImageInputSchema = z.object({
   name: z.string().describe('The name of the technology.'),
@@ -21,7 +22,7 @@ const GenerateTechImageOutputSchema = z.object({
   imageUrl: z
     .string()
     .describe(
-      'A URL for a relevant image (like a logo or illustrative image) for the technology, found on the web.'
+      'A URL for a relevant image (like a logo or illustrative image) for the technology.'
     ),
 });
 
@@ -34,15 +35,15 @@ export async function generateTechImage(
 }
 
 const generateTechImagePrompt = ai.definePrompt({
-    name: 'generateTechImagePrompt',
-    input: { schema: GenerateTechImageInputSchema },
-    output: { schema: GenerateTechImageOutputSchema },
-    tools: [googleSearchRetriever],
-    prompt: `You are an AI assistant. Your task is to find a relevant image URL for the given technology. 
-    It could be a logo or an illustrative image. Use the search tool. Only return the URL.
+  name: 'generateTechImagePrompt',
+  input: {schema: GenerateTechImageInputSchema},
+  output: {schema: GenerateTechImageOutputSchema},
+  tools: [googleSearchRetriever],
+  prompt: `You are an AI assistant. Your task is to find a relevant image URL for the given technology's logo.
+Use the search tool. Only return the URL.
 
-    Technology: {{{name}}}
-    `,
+Technology: {{{name}}}
+`,
 });
 
 const generateTechImageFlow = ai.defineFlow(
@@ -51,20 +52,35 @@ const generateTechImageFlow = ai.defineFlow(
     inputSchema: GenerateTechImageInputSchema,
     outputSchema: GenerateTechImageOutputSchema,
   },
-  async (input) => {
+  async input => {
+    // 1. Try to find the image via web search
     try {
-        const { output } = await generateTechImagePrompt(input);
-        if (output?.imageUrl) {
-            // Basic check to see if the output is a likely URL
-            if (output.imageUrl.startsWith('http')) {
-                 return output;
-            }
-        }
+      const {output} = await generateTechImagePrompt(input);
+      if (output?.imageUrl && output.imageUrl.startsWith('http')) {
+        return output; // Success, return found URL
+      }
     } catch (e) {
-        console.error("Web search for image failed.", e);
+      console.error('Web search for image failed, falling back to generation.', e);
     }
-    
-    // Fallback if the prompt fails or doesn't return a valid URL
-    return { imageUrl: '' };
+
+    // 2. Fallback: Generate an image with AI
+    try {
+      const {media} = await ai.generate({
+        model: googleAI.model('gemini-2.0-flash-preview-image-generation'),
+        prompt: `Create a minimalist and abstract logo for the technology: ${input.name}`,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      });
+
+      if (media?.url) {
+        return {imageUrl: media.url}; // Success, return generated image data URI
+      }
+    } catch (e) {
+      console.error('Image generation failed.', e);
+    }
+
+    // 3. Final Fallback: Return an empty string, which the action handles
+    return {imageUrl: ''};
   }
 );

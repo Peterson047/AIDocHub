@@ -23,5 +23,57 @@
       "Criação de aplicativos para demonstração de algoritmos e modelos de IA.",
       "Compartilhamento de resultados de experimentos científicos de forma interativa."
     ]
+  },
+  {
+    "id": "d8514836-2dab-4a50-875a-f1dfcfd5900b",
+    "name": "gemini",
+    "imageUrl": "https://placehold.co/600x400.png",
+    "categories": [
+      "Inteligência Artificial",
+      "Modelos de Linguagem Grandes",
+      "IA Generativa"
+    ],
+    "relevantLinks": [
+      "https://ai.google.dev/products/gemini",
+      "https://blog.google/technology/ai/gemini-ai-model/",
+      "https://cloud.google.com/products/gemini"
+    ],
+    "summary": "Gemini é uma família de modelos de linguagem grandes (LLMs) desenvolvida pelo Google AI. É projetada para ser multimodal, o que significa que pode processar e gerar texto, código, áudio, imagens e vídeo. O Gemini está disponível em diferentes tamanhos (Ultra, Pro, Nano) para atender a uma variedade de necessidades e plataformas, desde data centers até dispositivos móveis. Ele visa ser altamente eficiente e capaz de realizar tarefas complexas, como raciocínio avançado, codificação e compreensão de linguagem natural.",
+    "useCases": [
+      "Criação de conteúdo (texto, imagens, áudio, vídeo)",
+      "Chatbots e assistentes virtuais",
+      "Tradução de idiomas",
+      "Resumo de texto",
+      "Geração de código",
+      "Análise de dados",
+      "Pesquisa e desenvolvimento em IA",
+      "Ferramentas de produtividade",
+      "Aplicações em diversas indústrias (saúde, finanças, educação, etc.)"
+    ]
+  },
+  {
+    "id": "3aa8d711-50d6-4302-aa16-e71072431bff",
+    "name": "groq",
+    "imageUrl": "https://placehold.co/600x400.png",
+    "categories": [
+      "Hardware",
+      "Inteligência Artificial",
+      "Processadores",
+      "Infraestrutura de IA"
+    ],
+    "relevantLinks": [
+      "https://groq.com/",
+      "https://www.nextplatform.com/2024/02/28/groq-lpu-inference-engine-performance-claims-raise-eyebrows/",
+      "https://venturebeat.com/ai/groq-claims-its-new-lpu-inference-engine-offers-unmatched-performance-and-efficiency/"
+    ],
+    "summary": "Groq é uma empresa que desenvolve Unidades de Processamento de Linguagem (LPUs) projetadas para acelerar o desempenho da inferência de modelos de IA, com foco em cargas de trabalho de linguagem natural. Eles afirmam oferecer um desempenho significativamente superior em relação às GPUs tradicionais para tarefas de inferência, particularmente para modelos grandes de linguagem (LLMs). O objetivo é fornecer uma infraestrutura mais rápida e eficiente para implantação de aplicações de IA.",
+    "useCases": [
+      "Inferência rápida de LLMs",
+      "Aplicações de conversação com baixa latência",
+      "Serviços de tradução em tempo real",
+      "Geração de texto e conteúdo",
+      "Análise de dados em tempo real com modelos de IA",
+      "Aceleração de aplicações de IA em geral"
+    ]
   }
 ]
