@@ -17,6 +17,7 @@ const SummarizeTechInfoInputSchema = z.object({
   techInfo: z
     .string()
     .describe('The name or description of the technology to summarize.'),
+  existingCategories: z.array(z.string()).describe('A list of existing categories to choose from.'),
 });
 export type SummarizeTechInfoInput = z.infer<typeof SummarizeTechInfoInputSchema>;
 
@@ -40,7 +41,10 @@ const summarizeTechInfoPrompt = ai.definePrompt({
   prompt: `Você é um especialista em IA. Sua tarefa é pesquisar na web sobre a tecnologia fornecida e, em seguida, gerar um resumo, identificar categorias, casos de uso comuns e links relevantes.
 Responda em português do Brasil (pt-BR).
 
-Informações da tecnologia: {{{techInfo}}}
+Tecnologia: {{{techInfo}}}
+
+Use a lista de categorias existentes como referência. Prefira usar uma categoria existente se ela se encaixar.
+Categorias existentes: {{#each existingCategories}}- {{{this}}}\n{{/each}}
 
 Utilize a ferramenta de busca para obter as informações mais recentes. Se a busca falhar ou não retornar resultados, use seu conhecimento interno.
 
@@ -75,7 +79,10 @@ const summarizeTechInfoFlow = ai.defineFlow(
         prompt: `Você é um especialista em IA. Com base em seu conhecimento, gere um resumo, identifique categorias, casos de uso comuns e links relevantes para a tecnologia fornecida.
 Responda em português do Brasil (pt-BR).
 
-Informações da tecnologia: {{{techInfo}}}
+Tecnologia: {{{techInfo}}}
+
+Use a lista de categorias existentes como referência. Prefira usar uma categoria existente se ela se encaixar.
+Categorias existentes: {{#each existingCategories}}- {{{this}}}\n{{/each}}
 
 Saída:
 Resumo:

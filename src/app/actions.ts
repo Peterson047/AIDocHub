@@ -53,10 +53,14 @@ const techInfoSchema = z.string().min(3, 'Technology info must be at least 3 cha
 export async function addTechnology(techInfo: string): Promise<{ data?: Technology; error?: string }> {
   try {
     const validatedTechInfo = techInfoSchema.parse(techInfo);
+    
+    // Read current data to get existing categories
+    const technologies = await readTechnologies();
+    const existingCategories = Array.from(new Set(technologies.flatMap(t => t.categories)));
 
     // Run both AI flows in parallel
     const [summaryResult, imageResult] = await Promise.allSettled([
-      summarizeTechInfo({ techInfo: validatedTechInfo }),
+      summarizeTechInfo({ techInfo: validatedTechInfo, existingCategories }),
       generateTechImage({ name: validatedTechInfo }),
     ]);
 
@@ -85,8 +89,7 @@ export async function addTechnology(techInfo: string): Promise<{ data?: Technolo
       ...summaryData,
     };
     
-    // Read current data, add new technology, and write back
-    const technologies = await readTechnologies();
+    // Add new technology and write back
     technologies.push(newTechnology);
     await writeTechnologies(technologies);
 
