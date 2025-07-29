@@ -60,7 +60,7 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
             </Collapsible>
         )}
         {technology.useCases.length > 0 && (
-          <Collapsible className="w-full">
+          <Collapsible className="w-full" defaultOpen>
             <CollapsibleTrigger asChild>
               <button className="flex items-center text-sm font-semibold text-primary hover:underline pt-2">
                 Use Cases
