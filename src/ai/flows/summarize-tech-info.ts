@@ -38,12 +38,11 @@ const summarizeTechInfoPrompt = ai.definePrompt({
   output: {schema: SummarizeTechInfoOutputSchema},
   tools: [googleSearchRetriever],
   prompt: `Você é um especialista em IA. Sua tarefa é pesquisar na web sobre a tecnologia fornecida e, em seguida, gerar um resumo, identificar categorias, casos de uso comuns e links relevantes.
-Se a busca na web não retornar resultados, use seu conhecimento interno.
 Responda em português do Brasil (pt-BR).
 
 Informações da tecnologia: {{{techInfo}}}
 
-Utilize a ferramenta de busca para obter as informações mais recentes.
+Utilize a ferramenta de busca para obter as informações mais recentes. Se a busca falhar ou não retornar resultados, use seu conhecimento interno.
 
 Saída:
 Resumo: 
@@ -59,7 +58,33 @@ const summarizeTechInfoFlow = ai.defineFlow(
     outputSchema: SummarizeTechInfoOutputSchema,
   },
   async input => {
-    const {output} = await summarizeTechInfoPrompt(input);
+    try {
+        const {output} = await summarizeTechInfoPrompt(input);
+        if (output) {
+            return output;
+        }
+    } catch (e) {
+        console.error("Web search failed, falling back to internal knowledge.", e);
+    }
+    
+    // Fallback prompt without web search
+    const fallbackPrompt = ai.definePrompt({
+        name: 'summarizeTechInfoFallbackPrompt',
+        input: {schema: SummarizeTechInfoInputSchema},
+        output: {schema: SummarizeTechInfoOutputSchema},
+        prompt: `Você é um especialista em IA. Com base em seu conhecimento, gere um resumo, identifique categorias, casos de uso comuns e links relevantes para a tecnologia fornecida.
+Responda em português do Brasil (pt-BR).
+
+Informações da tecnologia: {{{techInfo}}}
+
+Saída:
+Resumo:
+Categorias:
+Casos de uso:
+Links relevantes:`,
+    });
+
+    const {output} = await fallbackPrompt(input);
     return output!;
   }
 );
