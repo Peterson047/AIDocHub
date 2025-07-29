@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Technology } from '@/lib/types';
-import { Link, ClipboardList } from 'lucide-react';
+import { Link } from 'lucide-react';
 import Image from 'next/image';
 import * as React from 'react';
 import {
@@ -34,12 +34,19 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
         )}
       <CardHeader>
         <CardTitle className="font-headline text-lg text-primary">{technology.name}</CardTitle>
-        <p className="text-sm text-muted-foreground pt-1 line-clamp-3">
-          {technology.summary}
-        </p>
       </CardHeader>
       <CardContent className="flex-grow p-0 px-6 space-y-2">
         <Accordion type="multiple" className="w-full">
+          {technology.summary && (
+            <AccordionItem value="summary">
+              <AccordionTrigger className="text-sm font-semibold py-2">Resumo</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-sm text-muted-foreground">
+                  {technology.summary}
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          )}
           {technology.useCases.length > 0 && (
              <AccordionItem value="use-cases">
                 <AccordionTrigger className="text-sm font-semibold py-2">Casos de Uso</AccordionTrigger>
