@@ -19,13 +19,20 @@ export async function addTechnology(techInfo: string): Promise<{ data?: Technolo
     ]);
 
     if (summaryResult.status === 'rejected') {
-      throw summaryResult.reason;
+      console.error('Summarize tech info rejected:', summaryResult.reason);
+      throw new Error('Failed to get technology summary.');
+    }
+    
+    // Ensure we have data before proceeding
+    if (!summaryResult.value) {
+        console.error('Summarize tech info returned undefined value');
+        throw new Error('Failed to get technology summary.');
     }
 
     const summaryData = summaryResult.value;
 
     const imageUrl =
-      imageResult.status === 'fulfilled'
+      imageResult.status === 'fulfilled' && imageResult.value.imageUrl
         ? imageResult.value.imageUrl
         : 'https://placehold.co/600x400.png'; // Fallback image
 
