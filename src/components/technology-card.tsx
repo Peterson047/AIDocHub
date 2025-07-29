@@ -6,12 +6,6 @@ import { Link, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import * as React from 'react';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
@@ -30,12 +24,12 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
 
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden transition-all hover:shadow-lg">
+    <Card className="flex flex-col h-full overflow-hidden transition-all hover:shadow-lg dark:bg-card">
         {technology.imageUrl && (
             <div className="relative w-full h-32">
                  <Image
                     src={technology.imageUrl}
-                    alt={`Ilustração para ${technology.name}`}
+                    alt={`Illustration for ${technology.name}`}
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -44,7 +38,7 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
             </div>
         )}
       <CardHeader>
-        <CardTitle className="font-headline text-lg text-primary">{technology.name}</CardTitle>
+        <CardTitle className="font-headline text-lg">{technology.name}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow p-0 px-6 space-y-2">
          {technology.summary && (
@@ -55,30 +49,33 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
                 {needsTruncation && (
                      <CollapsibleTrigger asChild>
                         <button className="flex items-center text-sm font-semibold text-primary hover:underline">
-                            {isSummaryOpen ? 'Ler menos' : 'Ler mais'}
+                            {isSummaryOpen ? 'Read less' : 'Read more'}
                             <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isSummaryOpen ? 'rotate-180' : ''}`} />
                         </button>
                     </CollapsibleTrigger>
                 )}
                 <CollapsibleContent>
-                    {/* O conteúdo completo já é exibido quando aberto, então isso pode ficar vazio ou ser removido se a lógica estiver no parágrafo acima */}
+                    {/* The full content is already displayed when open, so this can be empty or removed if the logic is in the paragraph above */}
                 </CollapsibleContent>
             </Collapsible>
         )}
-        <Accordion type="multiple" className="w-full">
-          {technology.useCases.length > 0 && (
-             <AccordionItem value="use-cases">
-                <AccordionTrigger className="text-sm font-semibold py-2">Casos de Uso</AccordionTrigger>
-                <AccordionContent>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                        {technology.useCases.slice(0, 3).map(useCase => (
-                            <li key={useCase}>{useCase}</li>
-                        ))}
-                    </ul>
-                </AccordionContent>
-             </AccordionItem>
-          )}
-        </Accordion>
+        {technology.useCases.length > 0 && (
+          <Collapsible className="w-full">
+            <CollapsibleTrigger asChild>
+              <button className="flex items-center text-sm font-semibold text-primary hover:underline pt-2">
+                Use Cases
+                <ChevronDown className="h-4 w-4 ml-1 transition-transform data-[state=open]:rotate-180" />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 pt-2">
+                    {technology.useCases.slice(0, 3).map(useCase => (
+                        <li key={useCase}>{useCase}</li>
+                    ))}
+                </ul>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
       </CardContent>
       <CardFooter className="pt-4 flex-col items-start gap-2">
         <div className="flex flex-wrap gap-1">
@@ -92,7 +89,7 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
           <Button asChild variant="link" className="p-0 h-auto text-sm">
             <a href={technology.relevantLinks[0]} target="_blank" rel="noopener noreferrer">
               <Link className="w-4 h-4 mr-1.5" />
-              Saiba Mais
+              Learn More
             </a>
           </Button>
         )}
