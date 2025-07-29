@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Technology } from '@/lib/types';
-import { Link } from 'lucide-react';
+import { Link, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import * as React from 'react';
 import {
@@ -11,6 +11,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 
 interface TechnologyCardProps {
@@ -18,6 +23,12 @@ interface TechnologyCardProps {
 }
 
 export function TechnologyCard({ technology }: TechnologyCardProps) {
+  const [isSummaryOpen, setIsSummaryOpen] = React.useState(false);
+  
+  const summarySnippet = technology.summary.split(' ').slice(0, 15).join(' ');
+  const needsTruncation = technology.summary.split(' ').length > 15;
+
+
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all hover:shadow-lg">
         {technology.imageUrl && (
@@ -36,17 +47,25 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
         <CardTitle className="font-headline text-lg text-primary">{technology.name}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow p-0 px-6 space-y-2">
+         {technology.summary && (
+            <Collapsible open={isSummaryOpen} onOpenChange={setIsSummaryOpen} className="space-y-2">
+                <div className="text-sm text-muted-foreground space-y-1">
+                    <p>{isSummaryOpen ? technology.summary : `${summarySnippet}${needsTruncation ? '...' : ''}`}</p>
+                </div>
+                {needsTruncation && (
+                     <CollapsibleTrigger asChild>
+                        <button className="flex items-center text-sm font-semibold text-primary hover:underline">
+                            {isSummaryOpen ? 'Ler menos' : 'Ler mais'}
+                            <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isSummaryOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                    </CollapsibleTrigger>
+                )}
+                <CollapsibleContent>
+                    {/* O conteúdo completo já é exibido quando aberto, então isso pode ficar vazio ou ser removido se a lógica estiver no parágrafo acima */}
+                </CollapsibleContent>
+            </Collapsible>
+        )}
         <Accordion type="multiple" className="w-full">
-          {technology.summary && (
-            <AccordionItem value="summary">
-              <AccordionTrigger className="text-sm font-semibold py-2">Resumo</AccordionTrigger>
-              <AccordionContent>
-                <p className="text-sm text-muted-foreground">
-                  {technology.summary}
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-          )}
           {technology.useCases.length > 0 && (
              <AccordionItem value="use-cases">
                 <AccordionTrigger className="text-sm font-semibold py-2">Casos de Uso</AccordionTrigger>
