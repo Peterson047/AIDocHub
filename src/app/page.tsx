@@ -14,14 +14,12 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import type { Technology } from '@/lib/types';
-import { addTechnology, searchTechnologies } from '@/app/actions';
+import { addTechnology, searchTechnologies, getTechnologies } from '@/app/actions';
 
 import { Logo } from '@/components/logo';
 import { AddTechnologyForm } from '@/components/add-technology-form';
 import { KnowledgeBaseFilters } from '@/components/knowledge-base-filters';
 import { KnowledgeBaseView } from '@/components/knowledge-base-view';
-
-const STORAGE_KEY = 'aidoc-hub-technologies';
 
 export default function Home() {
   const [technologies, setTechnologies] = React.useState<Technology[]>([]);
@@ -31,26 +29,23 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const { toast } = useToast();
 
-  // Load technologies from localStorage on initial render
+  // Load technologies from JSON file on initial render
   React.useEffect(() => {
-    try {
-      const storedTechnologies = localStorage.getItem(STORAGE_KEY);
-      if (storedTechnologies) {
-        setTechnologies(JSON.parse(storedTechnologies));
+    const loadData = async () => {
+      const { data, error } = await getTechnologies();
+      if (error) {
+        console.error("Failed to load technologies from file", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error Loading Data',
+            description: 'Could not load technology data from the server.',
+        });
+      } else if (data) {
+        setTechnologies(data);
       }
-    } catch (error) {
-      console.error("Failed to load technologies from localStorage", error);
-    }
-  }, []);
-
-  // Save technologies to localStorage whenever they change
-  React.useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(technologies));
-    } catch (error) {
-      console.error("Failed to save technologies to localStorage", error);
-    }
-  }, [technologies]);
+    };
+    loadData();
+  }, [toast]);
 
   const handleAddTechnology = async (techInfo: string) => {
     const result = await addTechnology(techInfo);
