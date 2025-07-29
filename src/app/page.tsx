@@ -21,6 +21,8 @@ import { AddTechnologyForm } from '@/components/add-technology-form';
 import { KnowledgeBaseFilters } from '@/components/knowledge-base-filters';
 import { KnowledgeBaseView } from '@/components/knowledge-base-view';
 
+const STORAGE_KEY = 'aidoc-hub-technologies';
+
 export default function Home() {
   const [technologies, setTechnologies] = React.useState<Technology[]>([]);
   const [activeFilters, setActiveFilters] = React.useState<string[]>([]);
@@ -28,6 +30,27 @@ export default function Home() {
   const [isSearching, setIsSearching] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const { toast } = useToast();
+
+  // Load technologies from localStorage on initial render
+  React.useEffect(() => {
+    try {
+      const storedTechnologies = localStorage.getItem(STORAGE_KEY);
+      if (storedTechnologies) {
+        setTechnologies(JSON.parse(storedTechnologies));
+      }
+    } catch (error) {
+      console.error("Failed to load technologies from localStorage", error);
+    }
+  }, []);
+
+  // Save technologies to localStorage whenever they change
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(technologies));
+    } catch (error) {
+      console.error("Failed to save technologies to localStorage", error);
+    }
+  }, [technologies]);
 
   const handleAddTechnology = async (techInfo: string) => {
     const result = await addTechnology(techInfo);
