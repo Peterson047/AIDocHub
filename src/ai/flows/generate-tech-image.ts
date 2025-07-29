@@ -41,7 +41,7 @@ const generateTechImageFlow = ai.defineFlow(
   async ({ name }) => {
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Crie uma imagem abstrata e minimalista para representar a tecnologia: ${name}. Use um estilo de arte digital moderno.`,
+      prompt: `Create an abstract and minimalist image to represent the technology: ${name}. Use a modern digital art style.`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },
