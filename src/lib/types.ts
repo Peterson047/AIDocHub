@@ -5,4 +5,5 @@ export interface Technology {
   categories: string[];
   useCases: string[];
   relevantLinks: string[];
+  imageUrl: string;
 }

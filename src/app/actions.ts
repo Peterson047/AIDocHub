@@ -1,6 +1,7 @@
 'use server';
 
 import { summarizeTechInfo } from '@/ai/flows/summarize-tech-info';
+import { generateTechImage } from '@/ai/flows/generate-tech-image';
 import { semanticSearchTech } from '@/ai/flows/semantic-search-tech';
 import type { Technology } from '@/lib/types';
 import { z } from 'zod';
@@ -11,11 +12,27 @@ export async function addTechnology(techInfo: string): Promise<{ data?: Technolo
   try {
     const validatedTechInfo = techInfoSchema.parse(techInfo);
 
-    const summaryData = await summarizeTechInfo({ techInfo: validatedTechInfo });
+    // Run both AI flows in parallel
+    const [summaryResult, imageResult] = await Promise.allSettled([
+      summarizeTechInfo({ techInfo: validatedTechInfo }),
+      generateTechImage({ name: validatedTechInfo }),
+    ]);
+
+    if (summaryResult.status === 'rejected') {
+      throw summaryResult.reason;
+    }
+
+    const summaryData = summaryResult.value;
+
+    const imageUrl =
+      imageResult.status === 'fulfilled'
+        ? imageResult.value.imageUrl
+        : 'https://placehold.co/600x400.png'; // Fallback image
 
     const newTechnology: Technology = {
       id: crypto.randomUUID(),
-      name: validatedTechInfo, // Initially set name to the input, user can edit later. AI doesn't return a definitive name.
+      name: validatedTechInfo,
+      imageUrl,
       ...summaryData,
     };
 

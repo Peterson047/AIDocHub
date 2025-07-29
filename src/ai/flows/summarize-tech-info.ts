@@ -3,7 +3,7 @@
 /**
  * @fileOverview A flow that summarizes technology information using Gemini.
  *
- * - summarizeTechInfo - A function that takes a technology name or description and returns a summary, categories, use cases, and relevant links.
+ * - summarizeTechInfo - A function that takes a technology name or description and returns a summary, categories, use cases, and relevant links in Brazilian Portuguese.
  * - SummarizeTechInfoInput - The input type for the summarizeTechInfo function.
  * - SummarizeTechInfoOutput - The return type for the summarizeTechInfo function.
  */
@@ -34,15 +34,16 @@ const summarizeTechInfoPrompt = ai.definePrompt({
   name: 'summarizeTechInfoPrompt',
   input: {schema: SummarizeTechInfoInputSchema},
   output: {schema: SummarizeTechInfoOutputSchema},
-  prompt: `You are an AI expert. Summarize the given technology, identify its categories, common use cases, and relevant links.
+  prompt: `Você é um especialista em IA. Resuma a tecnologia fornecida, identifique suas categorias, casos de uso comuns e links relevantes.
+Responda em português do Brasil (pt-BR).
 
-Technology Information: {{{techInfo}}}
+Informações da tecnologia: {{{techInfo}}}
 
-Output:
-Summary: 
-Categories:
-Use Cases:
-Relevant Links:`,
+Saída:
+Resumo: 
+Categorias:
+Casos de uso:
+Links relevantes:`,
 });
 
 const summarizeTechInfoFlow = ai.defineFlow(

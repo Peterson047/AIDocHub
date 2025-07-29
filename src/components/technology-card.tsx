@@ -2,7 +2,8 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Technology } from '@/lib/types';
-import { Link, ClipboardList, Lightbulb } from 'lucide-react';
+import { Link, ClipboardList } from 'lucide-react';
+import Image from 'next/image';
 
 interface TechnologyCardProps {
   technology: Technology;
@@ -10,7 +11,19 @@ interface TechnologyCardProps {
 
 export function TechnologyCard({ technology }: TechnologyCardProps) {
   return (
-    <Card className="flex flex-col h-full">
+    <Card className="flex flex-col h-full overflow-hidden">
+        {technology.imageUrl && (
+            <div className="relative w-full h-48">
+                 <Image
+                    src={technology.imageUrl}
+                    alt={`Ilustração para ${technology.name}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    data-ai-hint="abstract technology"
+                 />
+            </div>
+        )}
       <CardHeader>
         <CardTitle className="font-headline text-xl text-primary">{technology.name}</CardTitle>
         <div className="flex flex-wrap gap-1 pt-2">
@@ -28,7 +41,7 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
           <div>
             <h4 className="font-semibold flex items-center gap-2 mb-2">
               <ClipboardList className="w-4 h-4 text-accent" />
-              Use Cases
+              Casos de Uso
             </h4>
             <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
               {technology.useCases.slice(0, 3).map(useCase => (
@@ -43,7 +56,7 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
           <Button asChild variant="link" className="p-0 h-auto">
             <a href={technology.relevantLinks[0]} target="_blank" rel="noopener noreferrer">
               <Link className="w-4 h-4 mr-2" />
-              Learn More
+              Saiba Mais
             </a>
           </Button>
         )}
