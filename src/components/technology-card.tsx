@@ -34,22 +34,12 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
         )}
       <CardHeader>
         <CardTitle className="font-headline text-lg text-primary">{technology.name}</CardTitle>
-        <div className="flex flex-wrap gap-1 pt-1">
-          {technology.categories.slice(0, 3).map(category => (
-            <Badge key={category} variant="secondary" className="font-normal">
-              {category}
-            </Badge>
-          ))}
-        </div>
+        <p className="text-sm text-muted-foreground pt-1 line-clamp-3">
+          {technology.summary}
+        </p>
       </CardHeader>
       <CardContent className="flex-grow p-0 px-6 space-y-2">
         <Accordion type="multiple" className="w-full">
-          <AccordionItem value="summary">
-            <AccordionTrigger className="text-sm font-semibold py-2">Resumo</AccordionTrigger>
-            <AccordionContent className="text-sm text-muted-foreground">
-              {technology.summary}
-            </AccordionContent>
-          </AccordionItem>
           {technology.useCases.length > 0 && (
              <AccordionItem value="use-cases">
                 <AccordionTrigger className="text-sm font-semibold py-2">Casos de Uso</AccordionTrigger>
@@ -64,7 +54,14 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
           )}
         </Accordion>
       </CardContent>
-      <CardFooter className="pt-4">
+      <CardFooter className="pt-4 flex-col items-start gap-2">
+        <div className="flex flex-wrap gap-1">
+          {technology.categories.slice(0, 3).map(category => (
+            <Badge key={category} variant="secondary" className="font-normal">
+              {category}
+            </Badge>
+          ))}
+        </div>
         {technology.relevantLinks.length > 0 && (
           <Button asChild variant="link" className="p-0 h-auto text-sm">
             <a href={technology.relevantLinks[0]} target="_blank" rel="noopener noreferrer">
