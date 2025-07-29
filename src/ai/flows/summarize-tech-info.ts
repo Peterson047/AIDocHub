@@ -2,6 +2,7 @@
 
 /**
  * @fileOverview A flow that summarizes technology information using Gemini.
+ * It uses web search as a primary source of information.
  *
  * - summarizeTechInfo - A function that takes a technology name or description and returns a summary, categories, use cases, and relevant links in Brazilian Portuguese.
  * - SummarizeTechInfoInput - The input type for the summarizeTechInfo function.
@@ -10,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {googleSearchRetriever} from '@genkit-ai/google-cloud';
 
 const SummarizeTechInfoInputSchema = z.object({
   techInfo: z
@@ -34,10 +36,14 @@ const summarizeTechInfoPrompt = ai.definePrompt({
   name: 'summarizeTechInfoPrompt',
   input: {schema: SummarizeTechInfoInputSchema},
   output: {schema: SummarizeTechInfoOutputSchema},
-  prompt: `Você é um especialista em IA. Resuma a tecnologia fornecida, identifique suas categorias, casos de uso comuns e links relevantes.
+  tools: [googleSearchRetriever],
+  prompt: `Você é um especialista em IA. Sua tarefa é pesquisar na web sobre a tecnologia fornecida e, em seguida, gerar um resumo, identificar categorias, casos de uso comuns e links relevantes.
+Se a busca na web não retornar resultados, use seu conhecimento interno.
 Responda em português do Brasil (pt-BR).
 
 Informações da tecnologia: {{{techInfo}}}
+
+Utilize a ferramenta de busca para obter as informações mais recentes.
 
 Saída:
 Resumo: 

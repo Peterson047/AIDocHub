@@ -2,18 +2,26 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Technology } from '@/lib/types';
-import { Link, ClipboardList } from 'lucide-react';
+import { Link, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react';
 import Image from 'next/image';
+import * as React from 'react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 interface TechnologyCardProps {
   technology: Technology;
 }
 
 export function TechnologyCard({ technology }: TechnologyCardProps) {
+  const [isSummaryOpen, setIsSummaryOpen] = React.useState(false);
+
   return (
     <Card className="flex flex-col h-full overflow-hidden">
         {technology.imageUrl && (
-            <div className="relative w-full h-48">
+            <div className="relative w-full h-40">
                  <Image
                     src={technology.imageUrl}
                     alt={`Ilustração para ${technology.name}`}
@@ -35,10 +43,20 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
         </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-4">
-        <p className="text-muted-foreground">{technology.summary}</p>
+        <Collapsible open={isSummaryOpen} onOpenChange={setIsSummaryOpen}>
+          <CollapsibleContent className="text-sm text-muted-foreground space-y-2 prose-sm">
+            <p>{technology.summary}</p>
+          </CollapsibleContent>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full justify-center text-accent -mb-2">
+              {isSummaryOpen ? <ChevronUp className="mr-2"/> : <ChevronDown className="mr-2" />}
+              {isSummaryOpen ? 'Mostrar menos' : 'Mostrar resumo'}
+            </Button>
+          </CollapsibleTrigger>
+        </Collapsible>
         
         {technology.useCases.length > 0 && (
-          <div>
+          <div className="pt-4">
             <h4 className="font-semibold flex items-center gap-2 mb-2">
               <ClipboardList className="w-4 h-4 text-accent" />
               Casos de Uso
