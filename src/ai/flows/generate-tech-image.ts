@@ -1,15 +1,16 @@
 'use server';
 
 /**
- * @fileOverview A flow that generates an illustrative image for a technology.
+ * @fileOverview A flow that finds an illustrative image URL for a technology from the web.
  *
- * - generateTechImage - A function that takes a technology name and returns an image data URI.
+ * - generateTechImage - A function that takes a technology name and returns an image URL.
  * - GenerateTechImageInput - The input type for the generateTechImage function.
  * - GenerateTechImageOutput - The return type for the generateTechImage function.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { googleSearchRetriever } from '@genkit-ai/google-cloud';
 
 const GenerateTechImageInputSchema = z.object({
   name: z.string().describe('The name of the technology.'),
@@ -20,7 +21,7 @@ const GenerateTechImageOutputSchema = z.object({
   imageUrl: z
     .string()
     .describe(
-      "A generated image for the technology, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      'A URL for a relevant image (like a logo or illustrative image) for the technology, found on the web.'
     ),
 });
 
@@ -32,25 +33,38 @@ export async function generateTechImage(
   return generateTechImageFlow(input);
 }
 
+const generateTechImagePrompt = ai.definePrompt({
+    name: 'generateTechImagePrompt',
+    input: { schema: GenerateTechImageInputSchema },
+    output: { schema: GenerateTechImageOutputSchema },
+    tools: [googleSearchRetriever],
+    prompt: `You are an AI assistant. Your task is to find a relevant image URL for the given technology. 
+    It could be a logo or an illustrative image. Use the search tool. Only return the URL.
+
+    Technology: {{{name}}}
+    `,
+});
+
 const generateTechImageFlow = ai.defineFlow(
   {
     name: 'generateTechImageFlow',
     inputSchema: GenerateTechImageInputSchema,
     outputSchema: GenerateTechImageOutputSchema,
   },
-  async ({ name }) => {
-    const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Create an abstract and minimalist image to represent the technology: ${name}. Use a modern digital art style.`,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-    });
-
-    if (!media?.url) {
-      throw new Error('Image generation failed.');
+  async (input) => {
+    try {
+        const { output } = await generateTechImagePrompt(input);
+        if (output?.imageUrl) {
+            // Basic check to see if the output is a likely URL
+            if (output.imageUrl.startsWith('http')) {
+                 return output;
+            }
+        }
+    } catch (e) {
+        console.error("Web search for image failed.", e);
     }
-
-    return { imageUrl: media.url };
+    
+    // Fallback if the prompt fails or doesn't return a valid URL
+    return { imageUrl: '' };
   }
 );
