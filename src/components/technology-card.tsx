@@ -18,29 +18,44 @@ interface TechnologyCardProps {
 
 export function TechnologyCard({ technology }: TechnologyCardProps) {
   const [isSummaryOpen, setIsSummaryOpen] = React.useState(false);
-  
+
   const summarySnippet = technology.summary.split(' ').slice(0, 15).join(' ');
   const needsTruncation = technology.summary.split(' ').length > 15;
+
+  const getFaviconUrl = (url: string) => {
+    try {
+      const domain = new URL(url).hostname;
+      return `https://www.google.com/s2/favicons?sz=64&domain_url=${domain}`;
+    } catch (error) {
+      console.error("Invalid URL for favicon:", url);
+      return '/favicon.ico'; // Fallback to the site's favicon
+    }
+  };
+
+  const faviconUrl = technology.relevantLinks.length > 0
+    ? getFaviconUrl(technology.relevantLinks[0])
+    : '/favicon.ico';
 
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all hover:shadow-lg dark:bg-card">
-        {technology.imageUrl && (
-            <div className="relative w-full h-32">
+        <div className="flex items-center p-6">
+            <div className="relative w-10 h-10 mr-4 flex-shrink-0">
                  <Image
-                    src={technology.imageUrl}
-                    alt={`Illustration for ${technology.name}`}
+                    src={faviconUrl}
+                    alt={`Icon for ${technology.name}`}
                     fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    data-ai-hint="abstract technology"
+                    className="object-contain"
+                    sizes="40px"
+                    unoptimized
                  />
             </div>
-        )}
-      <CardHeader>
-        <CardTitle className="font-headline text-lg">{technology.name}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-grow p-0 px-6 space-y-2">
+            <CardHeader className="p-0">
+                <CardTitle className="font-headline text-lg">{technology.name}</CardTitle>
+            </CardHeader>
+        </div>
+
+      <CardContent className="flex-grow px-6 pb-6 space-y-2">
          {technology.summary && (
             <Collapsible open={isSummaryOpen} onOpenChange={setIsSummaryOpen} className="space-y-2">
                 <div className="text-sm text-muted-foreground space-y-1">
@@ -77,7 +92,7 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
           </Collapsible>
         )}
       </CardContent>
-      <CardFooter className="pt-4 flex-col items-start gap-2">
+      <CardFooter className="pt-4 flex-col items-start gap-2 px-6 pb-6">
         <div className="flex flex-wrap gap-1">
           {technology.categories.slice(0, 3).map(category => (
             <Badge key={category} variant="secondary" className="font-normal">
