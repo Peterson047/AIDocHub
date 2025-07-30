@@ -5,120 +5,131 @@ import { generateTechImage } from '@/ai/flows/generate-tech-image';
 import { semanticSearchTech } from '@/ai/flows/semantic-search-tech';
 import type { Technology } from '@/lib/types';
 import { z } from 'zod';
-import fs from 'node:fs/promises';
+import { open } from 'sqlite';
+import sqlite3 from 'sqlite3';
 import path from 'node:path';
 
-// Path to the data file
-const DATA_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'technologies.json');
+// --- Database Setup ---
+const DB_PATH = path.join(process.cwd(), 'src', 'data', 'database.db');
+let db: Awaited<ReturnType<typeof open>> | null = null;
 
-/**
- * Reads technologies from the JSON file.
- */
-async function readTechnologies(): Promise<Technology[]> {
+async function getDb() {
+  if (!db) {
+    db = await open({
+      filename: DB_PATH,
+      driver: sqlite3.Database,
+    });
+  }
+  return db;
+}
+
+// Helper to parse JSON fields from the database
+function parseJsonFields(tech: any): Technology {
+    return {
+        ...tech,
+        categories: JSON.parse(tech.categories || '[]'),
+        useCases: JSON.parse(tech.useCases || '[]'),
+        relevantLinks: JSON.parse(tech.relevantLinks || '[]'),
+    };
+}
+
+
+// --- Server Action: Get All Technologies ---
+export async function getTechnologies(): Promise<{ data?: Technology[]; error?: string }> {
   try {
-    const data = await fs.readFile(DATA_FILE_PATH, 'utf-8');
-    return JSON.parse(data);
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
-      return []; // File doesn't exist, return empty array
-    }
-    throw error;
+    const db = await getDb();
+    const technologiesFromDb = await db.all(
+      'SELECT id, name, summary, description, categories, useCases, relevantLinks, imageUrl FROM technologies ORDER BY id DESC'
+    );
+    const technologies = technologiesFromDb.map(parseJsonFields);
+    return { data: technologies };
+  } catch (e: any) {
+    console.error('Error in getTechnologies:', e);
+    return { error: 'Failed to read technologies from the database.' };
   }
 }
 
-/**
- * Writes technologies to the JSON file.
- */
-async function writeTechnologies(technologies: Technology[]): Promise<void> {
-  await fs.writeFile(DATA_FILE_PATH, JSON.stringify(technologies, null, 2), 'utf-8');
-}
-
-/**
- * Server action to get all technologies.
- */
-export async function getTechnologies(): Promise<{ data?: Technology[]; error?: string }> {
-    try {
-        const technologies = await readTechnologies();
-        // Return in reverse chronological order (newest first)
-        return { data: technologies.reverse() };
-    } catch (e: any) {
-        console.error('Error in getTechnologies action:', e);
-        return { error: 'Failed to read technologies from file.' };
-    }
-}
-
-
-const techInfoSchema = z.string().min(3, 'Technology info must be at least 3 characters long.');
+// --- Server Action: Add a New Technology ---
+const addTechSchema = z.string().min(3, 'Technology info must be at least 3 characters long.');
 
 export async function addTechnology(techInfo: string): Promise<{ data?: Technology; error?: string }> {
   try {
-    const validatedTechInfo = techInfoSchema.parse(techInfo);
-    
-    // Read current data to get existing categories
-    const technologies = await readTechnologies();
-    const existingCategories = Array.from(new Set(technologies.flatMap(t => t.categories)));
+    const validatedTechInfo = addTechSchema.parse(techInfo);
+    const db = await getDb();
 
-    // Run both AI flows in parallel
+    const existingTechsFromDb = await db.all('SELECT categories FROM technologies');
+    const existingCategories = Array.from(new Set(existingTechsFromDb.flatMap(t => JSON.parse(t.categories || '[]'))));
+
     const [summaryResult, imageResult] = await Promise.allSettled([
       summarizeTechInfo({ techInfo: validatedTechInfo, existingCategories }),
       generateTechImage({ name: validatedTechInfo }),
     ]);
 
     if (summaryResult.status === 'rejected') {
-      console.error('Summarize tech info rejected:', summaryResult.reason);
-      throw new Error('Failed to get technology summary.');
+      const reason = summaryResult.reason instanceof Error ? summaryResult.reason.message : String(summaryResult.reason);
+      throw new Error(`AI summarization failed: ${reason}`);
     }
     
-    // Ensure we have data before proceeding
-    if (!summaryResult.value) {
-        console.error('Summarize tech info returned undefined value');
-        throw new Error('Failed to get technology summary.');
-    }
-
     const summaryData = summaryResult.value;
 
-    const imageUrl =
-      imageResult.status === 'fulfilled' && imageResult.value.imageUrl
-        ? imageResult.value.imageUrl
-        : 'https://placehold.co/600x400.png'; // Fallback image
+    const imageUrl = imageResult.status === 'fulfilled' && imageResult.value.imageUrl
+      ? imageResult.value.imageUrl
+      : 'https://placehold.co/600x400.png';
+
+    const newTechnologyData = {
+        name: validatedTechInfo,
+        summary: summaryData.summary,
+        description: summaryData.summary,
+        categories: JSON.stringify(summaryData.categories),
+        useCases: JSON.stringify(summaryData.useCases),
+        relevantLinks: JSON.stringify(summaryData.relevantLinks),
+        imageUrl,
+    };
+
+    const result = await db.run(
+      'INSERT INTO technologies (name, summary, description, categories, useCases, relevantLinks, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      Object.values(newTechnologyData)
+    );
 
     const newTechnology: Technology = {
-      id: crypto.randomUUID(),
-      name: validatedTechInfo,
-      imageUrl,
-      ...summaryData,
+      id: result.lastID as number,
+      name: newTechnologyData.name,
+      summary: newTechnologyData.summary,
+      description: newTechnologyData.description,
+      categories: JSON.parse(newTechnologyData.categories),
+      useCases: JSON.parse(newTechnologyData.useCases),
+      relevantLinks: JSON.parse(newTechnologyData.relevantLinks),
+      imageUrl: newTechnologyData.imageUrl,
     };
-    
-    // Add new technology and write back
-    technologies.push(newTechnology);
-    await writeTechnologies(technologies);
 
     return { data: newTechnology };
   } catch (e: any) {
     if (e instanceof z.ZodError) {
       return { error: e.errors.map(err => err.message).join(', ') };
     }
-    console.error('Error in addTechnology action:', e);
+    console.error('Error in addTechnology:', e);
     return { error: e.message || 'An unexpected error occurred.' };
   }
 }
 
-const searchQuerySchema = z.string().min(1);
+// --- Server Action: Search Technologies ---
+const searchSchema = z.string().min(1);
 
-export async function searchTechnologies(
-  query: string,
-  knowledgeBase: Technology[]
-): Promise<{ data?: { relevantTechnologies: string[] }; error?: string }> {
+export async function searchTechnologies(query: string): Promise<{ data?: { relevantTechnologies: string[] }; error?: string }> {
   try {
-    const validatedQuery = searchQuerySchema.parse(query);
+    const validatedQuery = searchSchema.parse(query);
+    const db = await getDb();
+    
+    const allTech: Pick<Technology, 'name' | 'summary'>[] = await db.all('SELECT name, summary FROM technologies');
 
-    const knowledgeBaseString = knowledgeBase
+    if (allTech.length === 0) {
+      return { data: { relevantTechnologies: [] } };
+    }
+    
+    // Correctly and robustly create the knowledge base string with valid syntax
+    const knowledgeBaseString = allTech
       .map(tech => `Technology: ${tech.name}\nDescription: ${tech.summary}`)
       .join('\n\n');
-      
-    if (!knowledgeBaseString.trim()) {
-        return { data: { relevantTechnologies: [] } };
-    }
 
     const searchResult = await semanticSearchTech({
       query: validatedQuery,
@@ -130,7 +141,7 @@ export async function searchTechnologies(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map(err => err.message).join(', ') };
     }
-    console.error('Error in searchTechnologies action:', e);
-    return { error: e.message || 'An unexpected error occurred during search.' };
+    console.error('Error in searchTechnologies:', e);
+    return { error: 'An unexpected error occurred during search.' };
   }
 }

@@ -10,8 +10,6 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import type { Technology } from '@/lib/types';
 import { addTechnology, searchTechnologies, getTechnologies } from '@/app/actions';
@@ -20,6 +18,7 @@ import { Logo } from '@/components/logo';
 import { AddTechnologyForm } from '@/components/add-technology-form';
 import { KnowledgeBaseFilters } from '@/components/knowledge-base-filters';
 import { KnowledgeBaseView } from '@/components/knowledge-base-view';
+import { Separator } from '@/components/ui/separator';
 
 export default function Home() {
   const [technologies, setTechnologies] = React.useState<Technology[]>([]);
@@ -29,16 +28,15 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const { toast } = useToast();
 
-  // Load technologies from JSON file on initial render
   React.useEffect(() => {
     const loadData = async () => {
       const { data, error } = await getTechnologies();
       if (error) {
-        console.error("Failed to load technologies from file", error);
+        console.error("Failed to load technologies", error);
         toast({
             variant: 'destructive',
             title: 'Error Loading Data',
-            description: 'Could not load technology data from the server.',
+            description: 'Could not load technology data from the database.',
         });
       } else if (data) {
         setTechnologies(data);
@@ -52,11 +50,17 @@ export default function Home() {
     if (result.error) {
       toast({
         variant: 'destructive',
-        title: 'Error Summarizing Technology',
+        title: 'Error Adding Technology',
         description: result.error,
       });
     } else if (result.data) {
-      setTechnologies(prev => [result.data!, ...prev]);
+      // Refetch technologies to get the latest list
+      const { data, error } = await getTechnologies();
+       if (error) {
+        console.error("Failed to reload technologies", error);
+      } else if (data) {
+        setTechnologies(data);
+      }
       toast({
         title: 'Technology Added',
         description: `${result.data.name} has been added to your knowledge base.`,
@@ -73,7 +77,7 @@ export default function Home() {
     }
 
     setIsSearching(true);
-    const result = await searchTechnologies(query, technologies);
+    const result = await searchTechnologies(query);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -88,14 +92,20 @@ export default function Home() {
   };
 
   const allCategories = React.useMemo(() => {
+    // Correctly get unique categories from the 'categories' array field
     const categories = new Set<string>();
-    technologies.forEach(tech => tech.categories.forEach(cat => categories.add(cat)));
+    technologies.forEach(tech => {
+        if(tech.categories) {
+            tech.categories.forEach(cat => categories.add(cat));
+        }
+    });
     return Array.from(categories).sort();
   }, [technologies]);
 
   const filteredTechnologies = React.useMemo(() => {
     let result = technologies;
 
+    // Correctly filter based on the 'categories' array field
     if (activeFilters.length > 0) {
       result = result.filter(tech =>
         activeFilters.every(filter => tech.categories.includes(filter))
@@ -106,7 +116,6 @@ export default function Home() {
       const searchResultNames = new Set(searchResults.map(r => r.toLowerCase()));
       result = result.filter(tech => searchResultNames.has(tech.name.toLowerCase()));
     } else if (searchQuery && searchResults.length === 0 && !isSearching) {
-       // If there's a search query but no results, show nothing.
        return [];
     }
     

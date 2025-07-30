@@ -1,7 +1,8 @@
 export interface Technology {
-  id: string;
+  id: number;
   name: string;
   summary: string;
+  description: string; // The full description from the AI
   categories: string[];
   useCases: string[];
   relevantLinks: string[];

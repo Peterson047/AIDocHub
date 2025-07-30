@@ -19,8 +19,8 @@ interface TechnologyCardProps {
 export function TechnologyCard({ technology }: TechnologyCardProps) {
   const [isSummaryOpen, setIsSummaryOpen] = React.useState(false);
 
-  const summarySnippet = technology.summary.split(' ').slice(0, 15).join(' ');
-  const needsTruncation = technology.summary.split(' ').length > 15;
+  const summarySnippet = technology.summary ? technology.summary.split(' ').slice(0, 15).join(' ') : '';
+  const needsTruncation = technology.summary ? technology.summary.split(' ').length > 15 : false;
 
   const getFaviconUrl = (url: string) => {
     try {
@@ -32,7 +32,7 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
     }
   };
 
-  const faviconUrl = technology.relevantLinks.length > 0
+  const faviconUrl = technology.relevantLinks && technology.relevantLinks.length > 0
     ? getFaviconUrl(technology.relevantLinks[0])
     : '/favicon.ico';
 
@@ -69,12 +69,9 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
                         </button>
                     </CollapsibleTrigger>
                 )}
-                <CollapsibleContent>
-                    {/* The full content is already displayed when open, so this can be empty or removed if the logic is in the paragraph above */}
-                </CollapsibleContent>
             </Collapsible>
         )}
-        {technology.useCases.length > 0 && (
+        {technology.useCases && technology.useCases.length > 0 && (
           <Collapsible className="w-full" defaultOpen>
             <CollapsibleTrigger asChild>
               <button className="flex items-center text-sm font-semibold text-primary hover:underline pt-2">
@@ -94,13 +91,13 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
       </CardContent>
       <CardFooter className="pt-4 flex-col items-start gap-2 px-6 pb-6">
         <div className="flex flex-wrap gap-1">
-          {technology.categories.slice(0, 3).map(category => (
+          {technology.categories && technology.categories.slice(0, 3).map(category => (
             <Badge key={category} variant="secondary" className="font-normal">
               {category}
             </Badge>
           ))}
         </div>
-        {technology.relevantLinks.length > 0 && (
+        {technology.relevantLinks && technology.relevantLinks.length > 0 && (
           <Button asChild variant="link" className="p-0 h-auto text-sm">
             <a href={technology.relevantLinks[0]} target="_blank" rel="noopener noreferrer">
               <Link className="w-4 h-4 mr-1.5" />
