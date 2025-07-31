@@ -1,11 +1,10 @@
-"use client";
+'use client';
 
-import { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface AdminContextType {
   isAdmin: boolean;
   login: (password: string) => boolean;
-  logout: () => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -13,21 +12,20 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const login = (password: string) => {
-    // Em um aplicativo real, isso seria verificado no backend.
-    if (password === "admin") { 
+  // IMPORTANT: This is a simple, hardcoded password for demonstration.
+  // In a real-world application, this should be handled securely (e.g., environment variables, backend authentication).
+  const ADMIN_PASSWORD = 'admin';
+
+  const login = (password: string): boolean => {
+    if (password === ADMIN_PASSWORD) {
       setIsAdmin(true);
       return true;
     }
     return false;
   };
 
-  const logout = () => {
-    setIsAdmin(false);
-  };
-
   return (
-    <AdminContext.Provider value={{ isAdmin, login, logout }}>
+    <AdminContext.Provider value={{ isAdmin, login }}>
       {children}
     </AdminContext.Provider>
   );

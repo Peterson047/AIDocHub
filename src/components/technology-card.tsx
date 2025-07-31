@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Technology } from '@/lib/types';
-import { Link, ChevronDown } from 'lucide-react';
+import { Link, ChevronDown, Trash2 } from 'lucide-react'; // Import Trash2 icon
 import Image from 'next/image';
 import * as React from 'react';
 import {
@@ -10,14 +10,19 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-
+import { useAdmin } from '@/context/AdminContext'; // Import useAdmin
+import { deleteTechnology } from '@/app/actions'; // Import deleteTechnology
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 
 interface TechnologyCardProps {
   technology: Technology;
+  onDelete: (id: number) => void; // Add onDelete callback to update the UI
 }
 
-export function TechnologyCard({ technology }: TechnologyCardProps) {
+export function TechnologyCard({ technology, onDelete }: TechnologyCardProps) {
   const [isSummaryOpen, setIsSummaryOpen] = React.useState(false);
+  const { isAdmin } = useAdmin(); // Get admin state from context
+  const { toast } = useToast();
 
   const summarySnippet = technology.summary ? technology.summary.split(' ').slice(0, 15).join(' ') : '';
   const needsTruncation = technology.summary ? technology.summary.split(' ').length > 15 : false;
@@ -28,7 +33,7 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
       return `https://www.google.com/s2/favicons?sz=64&domain_url=${domain}`;
     } catch (error) {
       console.error("Invalid URL for favicon:", url);
-      return '/favicon.ico'; // Fallback to the site's favicon
+      return '/favicon.ico';
     }
   };
 
@@ -36,10 +41,35 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
     ? getFaviconUrl(technology.relevantLinks[0])
     : '/favicon.ico';
 
+  const handleDelete = async () => {
+      if (!window.confirm(`Are you sure you want to delete ${technology.name}?`)) {
+          return;
+      }
+
+      const { success, error } = await deleteTechnology(technology.id);
+      
+      if (success) {
+          toast({ title: 'Technology Deleted', description: `${technology.name} has been removed.`});
+          onDelete(technology.id); // Notify the parent component
+      } else {
+          toast({ variant: 'destructive', title: 'Error Deleting', description: error });
+      }
+  }
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden transition-all hover:shadow-lg dark:bg-card">
-        <div className="flex items-center p-6">
+    <Card className="relative flex flex-col h-full overflow-hidden transition-all hover:shadow-lg dark:bg-card pt-8">
+        {isAdmin && (
+            <Button
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2 h-7 w-7 z-10"
+                onClick={handleDelete}
+            >
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">Delete {technology.name}</span>
+            </Button>
+        )}
+        <div className="flex items-center px-6">
             <div className="relative w-10 h-10 mr-4 flex-shrink-0">
                  <Image
                     src={faviconUrl}
@@ -55,7 +85,7 @@ export function TechnologyCard({ technology }: TechnologyCardProps) {
             </CardHeader>
         </div>
 
-      <CardContent className="flex-grow px-6 pb-6 space-y-2">
+      <CardContent className="flex-grow px-6 pb-6 space-y-2 mt-6">
          {technology.summary && (
             <Collapsible open={isSummaryOpen} onOpenChange={setIsSummaryOpen} className="space-y-2">
                 <div className="text-sm text-muted-foreground space-y-1">

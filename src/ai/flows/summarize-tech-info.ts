@@ -11,7 +11,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {googleSearchRetriever} from '@genkit-ai/google-cloud';
+// Temporarily removing the problematic import. The package @genkit-ai/google-cloud
+// in the installed version does not export this tool.
+// import {googleSearchRetriever} from '@genkit-ai/google-cloud';
 
 const SummarizeTechInfoInputSchema = z.object({
   techInfo: z
@@ -23,7 +25,7 @@ export type SummarizeTechInfoInput = z.infer<typeof SummarizeTechInfoInputSchema
 
 const SummarizeTechInfoOutputSchema = z.object({
   summary: z.string().describe('A brief summary of the technology.'),
-  categories: z.array(z.string()).describe('Categories the technology belongs to.'),
+  categories: z.array(z.string()).describe('Categories the technology belongs to. Should always contain at least one.'),
   useCases: z.array(z.string()).describe('Common use cases for the technology.'),
   relevantLinks: z.array(z.string()).describe('Useful links related to the technology.'),
 });
@@ -37,13 +39,14 @@ const summarizeTechInfoPrompt = ai.definePrompt({
   name: 'summarizeTechInfoPrompt',
   input: {schema: SummarizeTechInfoInputSchema},
   output: {schema: SummarizeTechInfoOutputSchema},
-  tools: [googleSearchRetriever],
+  // Temporarily disabling the tool to fix the build.
+  // tools: [googleSearchRetriever],
   prompt: `Você é um especialista em IA. Sua tarefa é pesquisar na web sobre a tecnologia fornecida e, em seguida, gerar um resumo, identificar categorias, casos de uso comuns e links relevantes.
 Responda em português do Brasil (pt-BR).
 
 Tecnologia: {{{techInfo}}}
 
-Use a lista de categorias existentes como referência. Prefira usar uma categoria existente se ela se encaixar.
+Use a lista de categorias existentes como referência. Prefira usar uma categoria existente se ela se encaixar. Se nenhuma for adequada, crie uma nova categoria concisa e apropriada. A tecnologia DEVE ter pelo menos uma categoria.
 Categorias existentes: {{#each existingCategories}}- {{{this}}}\n{{/each}}
 
 Utilize a ferramenta de busca para obter as informações mais recentes. Se a busca falhar ou não retornar resultados, use seu conhecimento interno.
@@ -62,16 +65,9 @@ const summarizeTechInfoFlow = ai.defineFlow(
     outputSchema: SummarizeTechInfoOutputSchema,
   },
   async input => {
-    try {
-        const {output} = await summarizeTechInfoPrompt(input);
-        if (output) {
-            return output;
-        }
-    } catch (e) {
-        console.error("Web search failed, falling back to internal knowledge.", e);
-    }
+    // Since the primary prompt with the tool will now always fail (as the tool is removed),
+    // we can go directly to the fallback to use the model's internal knowledge.
     
-    // Fallback prompt without web search
     const fallbackPrompt = ai.definePrompt({
         name: 'summarizeTechInfoFallbackPrompt',
         input: {schema: SummarizeTechInfoInputSchema},
@@ -81,7 +77,7 @@ Responda em português do Brasil (pt-BR).
 
 Tecnologia: {{{techInfo}}}
 
-Use a lista de categorias existentes como referência. Prefira usar uma categoria existente se ela se encaixar.
+Use a lista de categorias existentes como referência. Prefira usar uma categoria existente se ela se encaixar. Se nenhuma for adequada, crie uma nova categoria concisa e apropriada. A tecnologia DEVE ter pelo menos uma categoria.
 Categorias existentes: {{#each existingCategories}}- {{{this}}}\n{{/each}}
 
 Saída:

@@ -145,3 +145,26 @@ export async function searchTechnologies(query: string): Promise<{ data?: { rele
     return { error: 'An unexpected error occurred during search.' };
   }
 }
+
+// --- Server Action: Delete Technology ---
+const deleteTechSchema = z.number().positive();
+
+export async function deleteTechnology(id: number): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const validatedId = deleteTechSchema.parse(id);
+    const db = await getDb();
+    const result = await db.run('DELETE FROM technologies WHERE id = ?', validatedId);
+
+    if (result.changes === 0) {
+      return { error: 'Technology not found.' };
+    }
+
+    return { success: true };
+  } catch (e: any) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(', ') };
+    }
+    console.error('Error in deleteTechnology action:', e);
+    return { error: 'Failed to delete the technology.' };
+  }
+}

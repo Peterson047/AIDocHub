@@ -19,6 +19,10 @@ import { AddTechnologyForm } from '@/components/add-technology-form';
 import { KnowledgeBaseFilters } from '@/components/knowledge-base-filters';
 import { KnowledgeBaseView } from '@/components/knowledge-base-view';
 import { Separator } from '@/components/ui/separator';
+import { useAdmin } from '@/context/AdminContext';
+import { Button } from '@/components/ui/button';
+import { LoginDialog } from '@/components/login-dialog';
+import { LogIn } from 'lucide-react';
 
 export default function Home() {
   const [technologies, setTechnologies] = React.useState<Technology[]>([]);
@@ -27,6 +31,8 @@ export default function Home() {
   const [isSearching, setIsSearching] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const { toast } = useToast();
+  const { isAdmin } = useAdmin();
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -45,6 +51,10 @@ export default function Home() {
     loadData();
   }, [toast]);
 
+  const handleDeleteTechnology = (id: number) => {
+    setTechnologies(prev => prev.filter(tech => tech.id !== id));
+  };
+
   const handleAddTechnology = async (techInfo: string) => {
     const result = await addTechnology(techInfo);
     if (result.error) {
@@ -54,13 +64,7 @@ export default function Home() {
         description: result.error,
       });
     } else if (result.data) {
-      // Refetch technologies to get the latest list
-      const { data, error } = await getTechnologies();
-       if (error) {
-        console.error("Failed to reload technologies", error);
-      } else if (data) {
-        setTechnologies(data);
-      }
+      setTechnologies(prev => [result.data!, ...prev]);
       toast({
         title: 'Technology Added',
         description: `${result.data.name} has been added to your knowledge base.`,
@@ -92,7 +96,6 @@ export default function Home() {
   };
 
   const allCategories = React.useMemo(() => {
-    // Correctly get unique categories from the 'categories' array field
     const categories = new Set<string>();
     technologies.forEach(tech => {
         if(tech.categories) {
@@ -105,7 +108,6 @@ export default function Home() {
   const filteredTechnologies = React.useMemo(() => {
     let result = technologies;
 
-    // Correctly filter based on the 'categories' array field
     if (activeFilters.length > 0) {
       result = result.filter(tech =>
         activeFilters.every(filter => tech.categories.includes(filter))
@@ -124,13 +126,14 @@ export default function Home() {
 
   return (
     <SidebarProvider>
+      <LoginDialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen} />
       <Sidebar>
         <SidebarHeader>
           <Logo />
         </SidebarHeader>
         <SidebarContent>
           <div className="p-2 flex flex-col gap-4">
-            <AddTechnologyForm onAddTechnology={handleAddTechnology} />
+            {isAdmin && <AddTechnologyForm onAddTechnology={handleAddTechnology} />}
             <Separator />
             <KnowledgeBaseFilters
               categories={allCategories}
@@ -140,7 +143,14 @@ export default function Home() {
           </div>
         </SidebarContent>
         <SidebarFooter>
-          {/* Footer content can go here */}
+          {!isAdmin && (
+            <div className="p-2">
+              <Button variant="outline" className="w-full" onClick={() => setIsLoginDialogOpen(true)}>
+                <LogIn className="mr-2 h-4 w-4" />
+                Admin Login
+              </Button>
+            </div>
+          )}
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
@@ -156,6 +166,7 @@ export default function Home() {
                 onSearch={handleSearch}
                 isLoading={isSearching}
                 hasActiveSearch={!!searchQuery}
+                onDelete={handleDeleteTechnology}
             />
         </div>
       </SidebarInset>
